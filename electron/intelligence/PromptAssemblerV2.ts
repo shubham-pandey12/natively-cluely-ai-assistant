@@ -126,11 +126,6 @@ const CONTRACT_INSTRUCTIONS: Record<AnswerContract, string> = {
   interview_short: 'Answer in first person AS the candidate. Concise (2–5 sentences). Ground in the candidate profile. Do not mention hidden context, retrieval, or internal systems.',
   interview_detailed: 'Answer in first person AS the candidate. Structured but natural; bullets only if asked. Ground every claim in the candidate profile/JD.',
   coding_answer: 'Pure technical answer. Sections: Approach, Data structures/techniques, Code, Dry run, Complexity, Edge cases. No profile, resume, or product mentions.',
-  sales_reply: 'Answer from the seller/product perspective. Handle the objection. Do not use the candidate resume or JD unless explicitly asked.',
-  lecture_notes: 'Produce clean student lecture notes: headings, key concepts, definitions, examples, and diagrams where useful. Student/learner perspective — no interview or sales framing.',
-  lecture_revision: 'Produce revision material: concise concept recap, likely exam questions, and a revision checklist. Student perspective.',
-  lecture_diagram: 'Produce a diagram for the concept. Prefer a valid Mermaid spec; label it AI-reconstructed if not copied from a source visual. Student perspective.',
-  team_meeting_summary: 'Summarize from a neutral facilitator perspective: decisions, action items, owners, open questions. No candidate framing.',
   general_assistant: 'Answer helpfully and directly in a natural voice. Do not invent profile facts.',
 };
 

@@ -8,7 +8,8 @@
 
 import { TRIAL_SENTINEL_KEY } from '../config/constants';
 import { CredentialsManager } from './CredentialsManager';
-import type { SearchProvider } from '../../premium/electron/knowledge/CompanyResearchEngine';
+
+interface SearchProvider {}
 
 export function resolveCompanySearchProvider(): SearchProvider | null {
   const cm = CredentialsManager.getInstance();

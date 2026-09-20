@@ -1291,7 +1291,7 @@ export function initializeIpcHandlers(appState: AppState): void {
                   try { v3DebugCollector?.recordFirstToken(); } catch { /* noop */ }
                 }
                 finalText += tok;
-                event.sender.send('gemini-stream-token', tok, { streamId: myStreamId });
+                // Buffered — delivered as one final answer after numeric provenance enforcement.
               }
             } catch (streamErr) {
               // Finalize the debug record with the partial answer, then let the
@@ -1337,8 +1337,73 @@ export function initializeIpcHandlers(appState: AppState): void {
                 return null;
               }
             }
-            event.sender.send('gemini-stream-done', { finalText, streamId: myStreamId });
-            finishDebug(finalText, true, null);
+            // ── Numeric provenance enforcement (Phase 8 Step 24) ────────────
+            // V3 tokens were buffered above; the renderer has seen nothing yet.
+            // applyNumericEnforcement validates finalText and may regenerate it
+            // exactly once before a single answer is delivered to the renderer.
+            const { applyNumericEnforcement } = require('./context-intelligence/validation/numeric-enforcement');
+            let deliveredText: string = finalText;
+            let npEnfResult: any = null;
+            try {
+              npEnfResult = await applyNumericEnforcement(
+                finalText,
+                [String(message || ''), composed.user],
+                async (correctionHint: string): Promise<string> => {
+                  // Regenerate once with the same V3 context plus correction hint.
+                  // Same model, same system prompt, same evidence — no new retrieval.
+                  const retryUserPrompt = `${correctionHint}\n\n${composed.user}`;
+                  let retryText = '';
+                  const retryStream = llmHelper.streamChat(
+                    retryUserPrompt,
+                    imagePaths,
+                    undefined,
+                    composed.system,
+                    true,
+                    true,
+                    composed.packedDataScopes ?? [],
+                    myController.signal,
+                    undefined,
+                    { v3Owned: true },
+                  ) as AsyncGenerator<string>;
+                  for await (const tok of retryStream) {
+                    retryText += tok;
+                  }
+                  return retryText;
+                },
+              );
+              deliveredText = npEnfResult.finalAnswer;
+            } catch (npErr) {
+              if (myController.signal.aborted) {
+                finishDebug(finalText, false, 'cancelled_during_enforcement');
+                return null;
+              }
+              console.error('[V3-numeric-provenance] enforcement error — delivering original answer', {
+                streamId: myStreamId,
+                error:    npErr instanceof Error ? npErr.message : String(npErr),
+              });
+              // deliveredText remains = finalText (original, unmodified)
+            }
+            // Superseded guard after enforcement (retry takes non-trivial time)
+            if (_chatStreamsBySender.get(senderId)?.streamId !== myStreamId) {
+              finishDebug(deliveredText, false, 'superseded_by_newer_stream');
+              return null;
+            }
+            // Deliver exactly one answer to the renderer — the same single-token
+            // pattern used by clarification, fallback, and identity-probe paths.
+            event.sender.send('gemini-stream-token', deliveredText, { streamId: myStreamId });
+            event.sender.send('gemini-stream-done', { finalText: deliveredText, streamId: myStreamId });
+            finishDebug(deliveredText, true, null);
+            if (npEnfResult) {
+              console.log('[V3-numeric-provenance] enforcement result', {
+                streamId:           myStreamId,
+                initialValid:       npEnfResult.initialValid,
+                enforced:           npEnfResult.enforced,
+                retryCount:         npEnfResult.retryCount,
+                finalValid:         npEnfResult.finalValid,
+                initialUnsupported: npEnfResult.initialUnsupported,
+                finalUnsupported:   npEnfResult.finalUnsupported,
+              });
+            }
 
             // ── Record the turn (V3 previously recorded NOTHING) ────────────
             // The short-circuit skipped every store the legacy path writes, so
@@ -1358,13 +1423,13 @@ export function initializeIpcHandlers(appState: AppState): void {
             if (liveModeIdAtRecord === (manualActiveMode?.id ?? null)) {
               try {
                 const { recordAnswerSummary } = require('./context-intelligence/question/conversation-state-store');
-                recordAnswerSummary(String(senderId), finalText);
+                recordAnswerSummary(String(senderId), deliveredText);
               } catch { /* continuity only */ }
               try {
                 _manualConversationMemory.record({
                   sessionId: String(senderId),
                   userMessage: String(message || ''),
-                  assistantAnswer: finalText,
+                  assistantAnswer: deliveredText,
                   mode: (modeInfo as any)?.templateType,
                   timestamp: Date.now(),
                 });
@@ -1372,18 +1437,18 @@ export function initializeIpcHandlers(appState: AppState): void {
               try {
                 const im = appState.getIntelligenceManager();
                 im?.addTranscript?.({ text: String(message || ''), speaker: 'user', timestamp: Date.now(), final: true, origin: 'manual_chat' }, true);
-                im?.addAssistantMessage?.(finalText, undefined, 'manual_chat');
+                im?.addAssistantMessage?.(deliveredText, undefined, 'manual_chat');
                 // Usage too: ai_interactions ("usage" in Meeting Notes) is
                 // populated solely from SessionTracker's usage log at
                 // saveMeeting time. Every legacy exit logs it; without this,
                 // a V3-answered chat during a meeting left the meeting's
                 // usage panel empty (confirmed in the live DB: V3 meetings
                 // had transcript rows but zero usage rows).
-                im?.logUsage?.('chat', String(message || ''), finalText);
+                im?.logUsage?.('chat', String(message || ''), deliveredText);
               } catch { /* session transcript only */ }
               try {
                 PhoneMirrorService.getInstance().publishUserMessage(String(myStreamId), String(message || ''));
-                PhoneMirrorService.getInstance().publishAssistantMessage(String(myStreamId), finalText, 'Chat');
+                PhoneMirrorService.getInstance().publishAssistantMessage(String(myStreamId), deliveredText, 'Chat');
               } catch { /* mirror only */ }
             }
 

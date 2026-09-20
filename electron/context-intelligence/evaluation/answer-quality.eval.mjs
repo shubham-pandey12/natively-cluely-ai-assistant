@@ -56,6 +56,15 @@ try {
   process.exit(1);
 }
 
+// ── Numeric provenance validator (Phase 8 Step 21) ───────────────────────────
+// Loaded separately so a missing build artifact degrades gracefully.
+let validateNumericProvenance;
+try {
+  ({ validateNumericProvenance } = await import(pathToFileURL(path.join(base, 'validation/numeric-provenance.js')).href));
+} catch {
+  console.warn('[eval:interview] numeric-provenance validator not available — np checks disabled');
+}
+
 const POLICY = MODE_POLICIES['technical-interview'];
 
 // ── Shared evaluation scope ───────────────────────────────────────────────────
@@ -580,6 +589,76 @@ const FIXTURES = [
       },
     ],
   },
+
+  // ── Phase 8 Step 21: Numeric Provenance evaluation fixtures ──────────────────
+  // These five fixtures specifically exercise the numeric provenance validator.
+  // Authoritative sources = [fixture.question, composed.user] — mirrors Step 20 wiring.
+  // numericProvenanceExpected: true  = expect valid===true
+  //                            null  = observation only (no assertion)
+  {
+    id: 'np_01',
+    // NP-01: question contains "5,000" → question is an authoritative source.
+    // Gemini repeating this number should produce valid===true.
+    question: 'The service handles 5,000 requests per second. How would you scale it if traffic increased by 10x?',
+    expectedIntent: 'scalability',
+    expectedFollowUpLikelihood: 'high',
+    expectedDepth: 'deep',
+    requiredDimensions: ['voice', 'strategy_adherence', 'depth', 'pacing'],
+    numericProvenanceExpected: true,
+    notes: 'NP-01: 5,000 in question (authoritative source) — Gemini repeating it should be valid',
+  },
+  {
+    id: 'np_02',
+    // NP-02: question contains 99.9% and 340ms.
+    // p99 is excluded by the letter-before-digit pattern.
+    // "99.9" and "340" are factual numbers; both come from the question.
+    // Gemini repeating them should be valid.
+    question: 'The service has 99.9% availability and p99 latency of 340ms. How would you improve its reliability?',
+    expectedIntent: 'optimization',
+    expectedFollowUpLikelihood: 'medium',
+    expectedDepth: 'standard',
+    requiredDimensions: ['voice', 'strategy_adherence', 'depth'],
+    numericProvenanceExpected: true,
+    notes: 'NP-02: 99.9 and 340 in question; p99 excluded by pattern — repeating them should be valid',
+  },
+  {
+    id: 'np_03',
+    // NP-03: structural/technical numbers in likely answer: Node.js 20, port 3000,
+    // Step 1, HTTP 200, O(n log n). All excluded by EXCLUSION_PATTERNS.
+    // Expected: valid===true (no factual claims to validate).
+    question: 'Walk me through how you would set up a Node.js 20 API server with HTTP rate limiting.',
+    expectedIntent: 'system_design',
+    expectedFollowUpLikelihood: 'medium',
+    expectedDepth: 'standard',
+    requiredDimensions: ['voice', 'strategy_adherence', 'depth'],
+    numericProvenanceExpected: true,
+    notes: 'NP-03: structural numbers (Node.js 20, port 3000, Step 1, HTTP 200) all excluded → valid',
+  },
+  {
+    id: 'np_04',
+    // NP-04: question contains "5,000" as the only authoritative metric.
+    // Gemini may introduce other factual numbers (e.g., cache hit ratios, TTLs,
+    // memory sizes) not grounded in the source. Purpose: observation only.
+    question: 'The service currently handles 5,000 requests per second. How would you design a caching layer to reduce database load?',
+    expectedIntent: 'system_design',
+    expectedFollowUpLikelihood: 'high',
+    expectedDepth: 'deep',
+    requiredDimensions: ['voice', 'strategy_adherence', 'depth', 'pacing'],
+    numericProvenanceExpected: null,
+    notes: 'NP-04: observation — Gemini may introduce factual numbers not in the source (e.g., TTL values, hit rates)',
+  },
+  {
+    id: 'np_05',
+    // NP-05: conceptual comparison; answer should not require factual numeric claims.
+    // Expected: valid===true (no factual numbers extracted, or only structural ones).
+    question: 'What is the difference between a thread and a process?',
+    expectedIntent: 'comparison',
+    expectedFollowUpLikelihood: 'high',
+    expectedDepth: 'standard',
+    requiredDimensions: ['voice', 'strategy_adherence', 'depth', 'pacing'],
+    numericProvenanceExpected: true,
+    notes: 'NP-05: no factual numeric claims expected in a conceptual comparison answer → valid',
+  },
 ];
 
 // ── Gemini helpers ────────────────────────────────────────────────────────────
@@ -813,6 +892,14 @@ async function run() {
       continue;
     }
 
+    // 2b. Numeric provenance (observability only — does NOT affect grading)
+    let numericProvenance = null;
+    if (validateNumericProvenance && answer) {
+      try {
+        numericProvenance = validateNumericProvenance(answer, [fixture.question, composed.user]);
+      } catch { /* observability only */ }
+    }
+
     // 3. Deterministic pre-filter
     const preFilterFlags = deterministicPreFilter(answer, fixture, actualIntent);
 
@@ -837,12 +924,15 @@ async function run() {
 
     const finalGrade  = grade(fixture, preFilterFlags, judgeScores);
     const gradeSymbol = finalGrade === 'PASS' ? '✓' : '✗';
+    const npSuffix = numericProvenance
+      ? (numericProvenance.valid ? '  np=✓' : `  np=✗(${numericProvenance.unsupported.join(',')})`)
+      : '';
     process.stdout.write(
       `${gradeSymbol}  ` +
       (judgeScores
         ? `voice=${judgeScores.voice} strat=${judgeScores.strategy_adherence} depth=${judgeScores.depth} pacing=${judgeScores.pacing}`
         : preFilterFlags.length > 0 ? `flags: ${preFilterFlags.join(',')}` : 'deterministic only'
-      ) + '\n',
+      ) + npSuffix + '\n',
     );
 
     results.push({
@@ -859,6 +949,7 @@ async function run() {
       grade: finalGrade,
       gradedBy,
       judgeExplanation: judgeScores?.explanation,
+      numericProvenance,
     });
 
     // Rate-limit pacing: wait between fixtures so we don't exhaust the Gemini
@@ -895,6 +986,21 @@ async function run() {
   console.log(`Skipped: ${skipped}`);
   console.log(`Pass rate (non-skipped): ${(passRate * 100).toFixed(1)}%`);
   console.log(passRate >= 0.8 ? '\n✓ PASS — ≥ 80% threshold met' : '\n✗ FAIL — below 80% threshold');
+
+  // 5b. Numeric provenance summary table (NP fixtures only)
+  const npResults = results.filter((r) => r.caseId.startsWith('np_'));
+  if (npResults.length > 0) {
+    console.log('\n── Numeric Provenance Results ──────────────────────────────');
+    console.log('Fixture  NP valid   Unsupported claims         Answer-quality');
+    console.log('───────  ─────────  ─────────────────────────  ──────────────');
+    for (const r of npResults) {
+      const np = r.numericProvenance;
+      const npValid   = np ? (np.valid ? 'true ' : 'false') : 'n/a  ';
+      const npUnsup   = np && !np.valid ? np.unsupported.join(', ') : '—';
+      const npUnsupPad = npUnsup.slice(0, 25).padEnd(25);
+      console.log(`${r.caseId.padEnd(8)} ${npValid}      ${npUnsupPad}  ${r.grade}`);
+    }
+  }
 
   // 6. Write JSON report
   const resultsDir = path.join(__dirname, 'results');

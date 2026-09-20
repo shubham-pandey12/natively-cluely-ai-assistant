@@ -399,6 +399,32 @@ export async function buildV3Prompt(input: BridgeInput): Promise<BridgeResult | 
 
     const result = await orchestrate(req, input.retrieval, preOrchState);
 
+    // CLARIFICATION short-circuit (Phase 8 Step 17, DoD).
+    // When a bare follow-up has an unresolvable referent the orchestrator sets
+    // trace.fallbackUsed = 'CLARIFICATION'. Calling composePrompt() after that
+    // produces a system prompt that contains both the clarifying-question
+    // directive AND the full answer-generation framework (strategy, depth,
+    // capabilities, grounding), making "clarifying question + answer in same
+    // turn" structurally possible. Returning here before composePrompt()
+    // removes that possibility by construction.
+    if (result.trace.fallbackUsed === 'CLARIFICATION') {
+      return {
+        system:
+          '# Task\n'
+          + 'The follow-up question could not be resolved — you do not know its subject.\n'
+          + 'Ask exactly ONE brief clarifying question. Name your best guess at the subject. '
+          + 'Do NOT answer as though the subject were known.',
+        user: `# Question\n${result.decision.resolvedQuestion}`,
+        answerability: result.answerability,
+        fallbackUsed: 'CLARIFICATION',
+        evidenceCount: 0,
+        packedDataScopes: [],
+        withheldDataScopes: [],
+        unsupportedInMode: false,
+        modeId,
+      };
+    }
+
     // Build conversation summary AFTER orchestrate() so we have the current turn's
     // interviewIntent to consult the gate — but USING the pre-orchestration chain.
     // Caller-supplied conversationSummary bypasses the gate (backward compat).
