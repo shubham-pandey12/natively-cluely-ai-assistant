@@ -55,6 +55,12 @@ export interface SuggestionTrigger {
     context: string;
     lastQuestion: string;
     confidence: number;
+    /** When true, skip the trigger cooldown in the planner and generation
+     *  pipeline. Set by the confirmed INTERVIEWER_TURN_COMPLETED path — dedup
+     *  is handled by the speculative Jaccard gate rather than time-based
+     *  cooldown, so cooldown would incorrectly silence confirmed answers that
+     *  follow a speculative run on the same turn. */
+    skipCooldown?: boolean;
 }
 
 // Context item matching Swift ContextManager structure

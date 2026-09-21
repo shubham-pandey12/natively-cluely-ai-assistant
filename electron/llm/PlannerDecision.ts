@@ -21,7 +21,7 @@ export interface PlannerDecision {
     confidence: number;
 }
 
-const QUESTION_PATTERN = /\b(what|how|why|where|when|which|who|can you|could you|tell me|explain|describe|walk me through|talk me through|should i|would you)\b/i;
+const QUESTION_PATTERN = /\b(what|how|why|where|when|which|who|can you|could you|tell me|explain|describe|walk me through|talk me through|should i|would you|give me|show me|implement|write|build|design|how would you|how do you|what would you|why would you)\b/i;
 const BRAINSTORM_PATTERN = /\b(brainstorm|options|strategy|ways to solve|possible solutions)\b/i;
 const CLARIFY_PATTERN = /\b(clarify|not clear|ambiguous|what do they mean|ask a follow|scope|constraints?)\b/i;
 const RESTATEMENT_PATTERN = /\b(sorry[,\s]+let me (?:restate|restart|say that again)|let me (?:restate|restart|say that again)|i(?:'| a)?m going to restate|that came out wrong|not what i meant)\b/i;

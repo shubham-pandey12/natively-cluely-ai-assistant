@@ -410,6 +410,31 @@ interface Message {
   };
 }
 
+/**
+ * Returns true when a query is asking about the live meeting transcript
+ * (recall / summary / attribution questions). False for general knowledge
+ * questions ("explain X", "give me a use case of X", "what is X") which
+ * must bypass RAG so the LLM can answer from its training data rather than
+ * being constrained to the transcript-only RAG prompt.
+ *
+ * Keep patterns conservative — a false negative (meeting question escapes to
+ * direct LLM) is far less harmful than a false positive (knowledge question
+ * gets the "wasn't discussed" RAG refusal).
+ */
+function isMeetingRecallQuery(query: string): boolean {
+  const RECALL_PATTERNS = [
+    // Explicit attribution: "what did the interviewer say/ask/mention"
+    /\b(what\s+did|what\s+was|what\s+were|who\s+said|who\s+asked|who\s+mentioned)\b/i,
+    // Recall verbs tied to the session
+    /\b(discussed?|mentioned|brought\s+up|talked\s+about|said\s+about|asked\s+about)\b/i,
+    // Meeting-context nouns
+    /\b(interview(?:er)?|meeting|conversation|transcript|earlier|previously|session)\b/i,
+    // Remind/recall intent
+    /\b(remind\s+me|what\s+happened|what\s+was\s+said|go\s+back|from\s+(?:the\s+)?(?:meeting|conversation|earlier|transcript))\b/i,
+  ];
+  return RECALL_PATTERNS.some((p) => p.test(query));
+}
+
 interface NativelyInterfaceProps {
   onEndMeeting?: () => void;
   overlayOpacity?: number;
@@ -5864,9 +5889,11 @@ Instructions:
 2. Provide a direct, helpful answer.
 3. Be concise.`;
           } else {
-            const ragResult = await window.electronAPI.ragQueryLive?.(question);
-            if (ragResult?.success) {
-              return;
+            if (isMeetingRecallQuery(question)) {
+              const ragResult = await window.electronAPI.ragQueryLive?.(question);
+              if (ragResult?.success) {
+                return;
+              }
             }
 
             prompt = `You are a real-time interview assistant. The user just repeated or paraphrased a question from their interviewer.
@@ -6035,8 +6062,11 @@ Provide only the answer, nothing else.`;
     pinAnswerPanel();
 
     try {
-      // JIT RAG pre-flight: try to use indexed meeting context first
-      if (currentAttachments.length === 0) {
+      // JIT RAG pre-flight: only for explicit meeting-recall questions.
+      // General knowledge questions ("give me a use case of X", "explain X") bypass
+      // RAG so the LLM can answer from training data rather than being constrained
+      // to the transcript-only prompt that returns "wasn't discussed."
+      if (currentAttachments.length === 0 && isMeetingRecallQuery(userText || '')) {
         const ragResult = await window.electronAPI.ragQueryLive?.(userText || '');
         if (ragResult?.success) {
           // JIT RAG handled it — response streamed via rag:stream-chunk events

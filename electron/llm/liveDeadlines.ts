@@ -61,11 +61,30 @@ export const LIVE_LOCAL_FIRST_USEFUL_TIMEOUT_MS = 30000;
  */
 export const LIVE_TOTAL_HARD_TIMEOUT_MS = 8000;
 /**
+ * Extended ceiling for complex answers (system design, coding, DSA, debugging).
+ * These require the model to reason before streaming, and providers like MiniMax
+ * legitimately take 6-12s for first-token on long system-design prompts. Speculative
+ * generation absorbs most of this latency; this cap is the fallback safety net for
+ * turns where speculative did not fire or was rejected.
+ */
+export const LIVE_COMPLEX_TOTAL_HARD_TIMEOUT_MS = 15000;
+/**
  * Local-provider counterpart to LIVE_TOTAL_HARD_TIMEOUT_MS: the no-fallback ceiling
  * when there is no deterministic fallback to swap in. Matches the local first-useful
  * cap so a cold local load isn't aborted to an empty answer.
  */
 export const LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS = 30000;
+
+/**
+ * The total hard timeout for a given answer type. Used as `firstUsefulDeadlineMs`
+ * in `raceStreamWithDeadline` for the main WTA generation path. Complex answers get
+ * a longer ceiling because speculative generation may not have fired, and provider
+ * first-token latency is legitimately higher for dense prompts.
+ */
+export function totalHardTimeoutMs(answerType: AnswerType, isLocal: boolean = false): number {
+  if (isLocal) return LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS;
+  return COMPLEX_TYPES.has(answerType) ? LIVE_COMPLEX_TOTAL_HARD_TIMEOUT_MS : LIVE_TOTAL_HARD_TIMEOUT_MS;
+}
 /**
  * After the first useful token has streamed, a long answer (coding scaffold +
  * sections) may legitimately keep flowing — we only abort on a genuine

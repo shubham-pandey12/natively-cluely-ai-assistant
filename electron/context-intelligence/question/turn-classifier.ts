@@ -1128,7 +1128,14 @@ function detectTypes(q: string, input: ClassificationInput): { types: QuestionTy
     // is set rather than documents. Questions WITH an anaphor ("how would you scale
     // this system?") still point at a specific context artifact → keep DOCUMENT_FACT.
     const howWouldYouGeneral = /\bhow would you\b/.test(q) && !CONTEXT_ANAPHOR_RE.test(q);
-    if (d01Blocked && !definiteValueLookup || howWouldYouGeneral) {
+    // Phase 8 (aq_017): a question already classified as DEEPENING behavior by
+    // IB_DEEPENING_RE is a conversational elaboration request regardless of word
+    // count. isBareFollowUp() gated it out on the 5-word cap, but DEEPENING is
+    // the authoritative signal. Routing it to DOCUMENT_FACT/PRIVATE_SOURCE_REQUIRED
+    // fires noEvidenceNotice on a question that needs no private evidence — the
+    // model should elaborate from conversation context, not search private documents.
+    const isDeepening = IB_DEEPENING_RE.test(String(input.resolvedQuestion));
+    if (d01Blocked && !definiteValueLookup || howWouldYouGeneral || isDeepening) {
       types.add('GENERAL_TECHNICAL'); noteWholeQ('GENERAL_TECHNICAL');
     } else {
       types.add('DOCUMENT_FACT'); noteWholeQ('DOCUMENT_FACT');

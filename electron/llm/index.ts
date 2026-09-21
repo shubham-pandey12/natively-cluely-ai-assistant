@@ -104,11 +104,12 @@ export type { PiTelemetryEvent, PiTelemetryRecord } from "./piTelemetry";
 export { resolveLiveFollowup, isContextFreeBareFollowup, toMemoryMode, toSurface, effectiveMemoryMode } from "./liveSessionMemory";
 export type { LiveTurn, LiveResolveInput } from "./liveSessionMemory";
 export {
-  raceStreamWithDeadline, firstUsefulDeadlineMs,
+  raceStreamWithDeadline, firstUsefulDeadlineMs, totalHardTimeoutMs,
   LIVE_FIRST_USEFUL_BUDGET_MS, LIVE_PROVIDER_FIRST_USEFUL_HARD_TIMEOUT_MS,
   LIVE_PROVIDER_FIRST_USEFUL_COMPLEX_TIMEOUT_MS, LIVE_TOTAL_HARD_TIMEOUT_MS,
-  LIVE_LOCAL_FIRST_USEFUL_TIMEOUT_MS, LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS,
-  LIVE_INTER_TOKEN_STALL_MS, BENCHMARK_PER_QUESTION_HARD_TIMEOUT_MS,
+  LIVE_COMPLEX_TOTAL_HARD_TIMEOUT_MS, LIVE_LOCAL_FIRST_USEFUL_TIMEOUT_MS,
+  LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS, LIVE_INTER_TOKEN_STALL_MS,
+  BENCHMARK_PER_QUESTION_HARD_TIMEOUT_MS,
 } from "./liveDeadlines";
 export type { FollowUpContext, ResolvedFollowUp, FollowUpSurface } from "./FollowUpResolver";
 export { validateAnswerStructure, validateCodingMarkdown, detectAndExtractScaffoldMisfire, hasUnrecoveredScaffoldContamination } from "./AnswerValidator";

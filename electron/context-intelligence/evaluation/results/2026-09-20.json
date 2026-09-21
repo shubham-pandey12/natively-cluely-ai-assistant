@@ -1,228 +1,278 @@
 {
-  "date": "2026-09-20T06:24:19.187Z",
+  "date": "2026-09-20T13:09:18.171Z",
   "model": "gemini-3.1-flash-lite",
   "judgeModel": "gemini-3.1-flash-lite",
   "totalCases": 27,
-  "passed": 0,
-  "failed": 0,
-  "skipped": 27,
-  "passRate": 0,
+  "passed": 23,
+  "failed": 1,
+  "skipped": 3,
+  "passRate": 0.9583333333333334,
   "results": [
     {
       "caseId": "aq_001",
       "question": "What is a closure?",
       "actualIntent": "concept_explanation",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "I think of a closure as a function that \"remembers\" the environment in which it was created, even after that outer scope has finished executing. It basically lets a function carry around a private set of data that persists between calls.\n\nA simple example would be a counter function:\n\n```javascript\nfunction createCounter() {\n  let count = 0;\n  return function() {\n    return ++count;\n  };\n}\n\nconst counter = createCounter();\nconsole.log(counter()); // 1\nconsole.log(counter()); // 2\n```\n\nThe inner function maintains access to the `count` variable because it’s closed over that scope. The main thing to watch out for is memory usage; since the closure keeps those variables alive, you can accidentally hold onto large objects in memory longer than you intended if you aren't careful.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 48.969096013s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"48s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_002",
       "question": "How does garbage collection work in JavaScript?",
       "actualIntent": "mechanism_explanation",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "I think of JavaScript garbage collection as a background process that periodically cleans up memory by identifying which objects are no longer reachable from the root of your application.\n\nThe primary mechanism used in modern engines like V8 is mark-and-sweep. It starts by traversing the object graph from \"roots\"—like the global object or active stack frames—and marks every object it can reach as \"alive.\" Once that traversal finishes, the engine sweeps through the memory heap, reclaiming any object that wasn't marked, effectively deleting anything that’s become unreachable.\n\nTo keep this efficient, engines often use generational collection, where they split the heap into a \"young generation\" and an \"old generation.\" Most objects die young, so the collector runs frequent, fast passes on the young generation, only promoting objects to the old generation if they survive multiple cycles.\n\nThe main design trade-off here is between memory usage and performance; the collector has to pause execution—the \"stop-the-world\" effect—to ensure the object graph doesn't change while it's marking. A common gotcha is that even if you don't need an object anymore, if you accidentally leave a reference to it in a global variable or a long-lived closure, the collector will see it as reachable and keep it in memory, which is usually how memory leaks sneak into JS apps.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 48.672709107s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"48s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_003",
       "question": "Implement a function to detect a cycle in a linked list.",
       "actualIntent": "coding_task",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "To detect a cycle, I’ll use Floyd’s Cycle-Finding algorithm, often called the \"tortoise and the hare\" approach. The key insight is that if there is a loop, a fast pointer moving two steps at a time will eventually \"lap\" a slow pointer moving one step at a time, causing them to meet at the same node.\n\nThe naive approach would be to store every visited node in a hash set to check for duplicates, but that uses linear space. Using two pointers allows us to solve this with constant space.\n\nHere is how I’d implement it:\n\n```python\ndef has_cycle(head):\n    slow = head\n    fast = head\n    \n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n        \n        if slow == fast:\n            return True\n            \n    return False\n```\n\nThis runs in O(n) time, where n is the number of nodes in the list, because in the worst case, the fast pointer traverses the list once. The space complexity is O(1) since we only store two pointer references regardless of the list size.\n\nRegarding edge cases, this code handles an empty list or a single-node list without a cycle gracefully by returning `False` because the `while` condition fails immediately. It assumes the list is structured as a standard singly linked list where each node has a `next` attribute.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 4,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 48.402894501s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"48s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "The answer followed all strategy steps effectively. It missed a formal clarification of input/output requirements at the very beginning, though it implicitly assumed a standard linked list structure which was clarified at the end. The voice is natural and the pacing is appropriate for a high-likelihood follow-up.",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_004",
       "question": "Design a URL shortener at scale.",
       "actualIntent": "system_design",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "To design a URL shortener, I’d start by clarifying the scale: are we talking about millions of redirects per day, and do we need to support custom aliases or just random strings? Assuming a high-read, low-write ratio, I’d focus on low-latency lookups.\n\nAt a high level, the architecture would consist of a client, a load balancer, a web service, and a database. For the data model, I’d use a simple mapping table: `short_url` (the primary key) and `long_url`.\n\nFor the core component—the ID generator—I’d avoid random strings to prevent collisions. Instead, I’d use a base-62 encoding of a unique, monotonically increasing integer. You could generate these IDs using a distributed sequence generator like Twitter’s Snowflake or a dedicated service that hands out ranges of IDs to application nodes to minimize database contention.\n\nFor storage, a NoSQL key-value store like DynamoDB or Cassandra is ideal because it offers predictable, sub-millisecond read latency, which is critical for redirects. I’d place a caching layer like Redis in front of the database to handle the \"hot\" URLs, as most traffic will likely hit a small percentage of the total links.\n\nRegarding failure modes, the main bottleneck is the ID generator; if it goes down, we can't create new links. I’d mitigate this by using a cluster of generators or pre-allocating ID ranges to nodes. If the cache fails, the database will see a spike in traffic, so I’d implement rate limiting and circuit breakers to protect the primary store.\n\nScaling this is straightforward: the read path scales horizontally by adding more web servers and read replicas, while the write path is limited by the ID generator's throughput. The main tradeoff here is consistency versus availability; for a URL shortener, we can favor availability, as a slight delay in a new link being \"live\" is usually acceptable.\n\nDoes that high-level flow make sense, or would you like to dive deeper into the ID generation strategy or how we handle cache invalidation?",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 48.099071297s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"48s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": false,
+        "unsupported": [
+          "62"
+        ]
+      }
     },
     {
       "caseId": "aq_005",
       "question": "How does the JavaScript event loop work?",
       "actualIntent": "mechanism_explanation",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "I think of the event loop as the engine that lets JavaScript handle asynchronous tasks without blocking the main thread, even though the language itself is single-threaded. \n\nIt works by constantly checking two things: the call stack and the task queues. When you call a function, it gets pushed onto the stack, and the engine executes it until it returns. If that function triggers an asynchronous operation—like a timer or a fetch request—the browser or Node.js runtime handles that work in the background. Once that background task finishes, its callback is pushed into a queue, like the Macrotask queue for `setTimeout` or the Microtask queue for Promises.\n\nThe loop’s job is simple: it waits until the call stack is completely empty, then it prioritizes the Microtask queue, processing every task there until it's cleared. Only after the Microtask queue is empty does it move on to process a single task from the Macrotask queue. \n\nThe key design choice here is that Microtasks take precedence, which is why `Promise.resolve().then()` will always execute before a `setTimeout` with a zero-millisecond delay. A common gotcha is that if you flood the Microtask queue—say, with a recursive promise chain—you can actually starve the event loop, effectively freezing your UI because the loop never gets a chance to process the Macrotasks or perform a render.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 47.812558171s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"47s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_006",
       "question": "What is Kubernetes?",
       "actualIntent": "concept_explanation",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "I think of Kubernetes as an orchestration engine that automates the deployment, scaling, and management of containerized applications across a cluster of machines. It solves the problem of manual infrastructure overhead by ensuring your containers are running exactly where and how you defined them, even if a node fails.\n\nFor example, if you define a deployment with three replicas of a web server, Kubernetes constantly monitors the cluster; if one container crashes, it automatically restarts it to maintain that desired state. The main thing to keep in mind is that it’s declarative—you tell it the \"what\" via YAML manifests, and the control plane handles the \"how\" of reconciling the current state with your requirements.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 47.518258589s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"47s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_007",
       "question": "What are the tradeoffs between SQL and NoSQL databases?",
       "actualIntent": "tradeoff",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "When choosing between SQL and NoSQL, it really comes down to how much you value schema rigidity versus horizontal scale.\n\nI usually look at these three dimensions:\n\n*   **Data Structure:** SQL is great when your data is highly relational and requires strict integrity through ACID transactions. NoSQL is better for unstructured or rapidly evolving data where you need a flexible schema.\n*   **Scalability:** SQL databases are typically scaled vertically by adding more power to a single server. NoSQL databases are designed for horizontal scaling, making it much easier to distribute data across clusters of commodity hardware.\n*   **Query Complexity:** SQL gives you powerful, standardized joins and complex analytical queries out of the box. NoSQL often requires you to denormalize your data, which makes simple reads fast but can make complex reporting or cross-collection joins difficult to manage.\n\nIf you’re building a financial system where consistency is non-negotiable, SQL is the clear winner. If you’re dealing with massive volumes of semi-structured data—like user activity logs or real-time sensor feeds—NoSQL is usually the way to go.\n\nUltimately, it depends on whether your priority is maintaining strict relationships or handling high-velocity, unpredictable data growth. If you choose NoSQL, you’re sacrificing the ease of complex joins and immediate consistency for the sake of availability and partition tolerance. That cost becomes unacceptable if your application logic ends up having to manually handle data integrity that the database would have otherwise enforced for you.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 47.227693177s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"47s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_008",
       "question": "A React component re-renders on every keystroke even though its props have not changed. Walk me through how you would debug this.",
       "actualIntent": "debugging",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "If a component is re-rendering on every keystroke despite stable props, the most likely culprit is that a parent component is re-rendering and passing down a new object or function reference, or the component is consuming a context that updates frequently.\n\nHere is how I would narrow it down:\n\nFirst, I’d use the React DevTools Profiler to confirm exactly which component is triggering the render cycle and look at the \"Why did this render?\" highlight. If that’s inconclusive, I’d check these three hypotheses:\n\n1. **Unstable prop references:** A parent might be defining an object or function inline (e.g., `onClick={() => ...}`), creating a new reference every render. I’d test this by wrapping the suspected prop in `useMemo` or `useCallback` in the parent and seeing if the child stops re-rendering.\n2. **Context thrashing:** If the component uses `useContext`, it will re-render whenever the context value changes. I’d check if the context provider is wrapping the component and if its value object is being recreated on every parent render.\n3. **State placement:** The state driving the keystrokes might be living too high up in the tree, causing the entire subtree to re-render. I’d verify this by moving the state down to the specific input component or using `React.memo` on the child component to bail out if props haven't changed.\n\nThe root cause is usually a reference equality failure—React sees a \"new\" prop because the memory address changed, even if the data looks the same. To fix this, I’d memoize the offending prop or lift the state down. \n\nTo verify the fix, I’d use the React DevTools \"Highlight updates\" feature; if the component no longer flashes during keystrokes, the re-render is successfully prevented. To prevent recurrence, I’d add a linting rule like `react-hooks/exhaustive-deps` to catch missing dependencies and encourage the use of `React.memo` for expensive components to ensure they only update when their specific props actually change.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 4,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 46.855558066s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"46s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "The answer follows the strategy well, though it slightly conflates the restatement of symptoms with the initial diagnosis. It provides a clear, actionable path that matches the requested depth and pacing.",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_009",
       "question": "How would you scale a social media feed to 100 million daily active users?",
       "actualIntent": "system_design",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "To scale a feed to 100 million DAU, I’d focus on moving the heavy lifting from read-time to write-time. With that volume, you can’t compute a feed on the fly for every request, so the core strategy is pre-computing feeds for active users.\n\nFirst, I’d separate the architecture into two paths: a \"push\" model for users with a standard follower count and a \"pull\" model for celebrities or high-volume accounts. For the majority, when a user posts, we fan out that update to their followers' pre-computed feed caches in Redis. For celebrities, we avoid the massive fan-out by keeping their posts in a separate store and merging them into their followers' feeds only when the follower actually requests their timeline.\n\nRegarding the data model, I’d use a wide-column store like Cassandra to handle the high write throughput of post metadata and a distributed cache like Redis to store the feed IDs for each user. The API contract would be simple: a `GET /feed` endpoint that fetches the pre-computed list of post IDs from the cache, followed by a `GET /posts` batch request to hydrate those IDs with content from the primary database.\n\nThe biggest bottleneck here is the \"celebrity problem\" and cache invalidation. If a celebrity posts, updating millions of caches simultaneously creates a massive spike. My strategy for scaling is to shard the feed caches by user ID to distribute the load across a cluster, and use asynchronous message queues (like Kafka) to handle the fan-out process so the user’s post request returns immediately.\n\nIf the system fails, the first thing to break will be the cache layer. I’d handle this by implementing a fallback to the primary database for feed generation, though it would be slower, and by using circuit breakers to prevent cascading failures during high-traffic events. The main tradeoff is storage versus latency: we’re trading significant memory and storage space for the pre-computed feeds to ensure that the read experience for the user remains sub-100ms.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 4,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 46.55652119s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"46s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "The answer is strong and covers the core architectural requirements well. It missed explicit estimation of scale (e.g., QPS/Storage) as requested in step 2, but otherwise followed the strategy effectively.",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_010",
       "question": "What are the tradeoffs of using TypeScript over JavaScript?",
       "actualIntent": "tradeoff",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "The biggest tradeoff is that you’re trading upfront development speed for long-term maintainability and safety. \n\nWhen you use TypeScript, you’re optimizing for early error detection and better editor tooling. The static type checking catches common bugs like undefined properties or type mismatches before you even run the code, which is a huge win for refactoring large codebases. The sacrifice, however, is the \"tax\" of writing type definitions and managing the build step, which can feel like friction when you're just trying to prototype something quickly.\n\nJavaScript, on the other hand, optimizes for velocity and simplicity. You don't have to worry about compilation or complex type hierarchies, which makes it great for small scripts or rapid experimentation. The cost is that as the project grows, you lose that safety net, often leading to \"runtime surprises\" that are much harder to debug than a build-time error.\n\nIf you’re working on a team or a long-lived project, TypeScript is almost always the better choice because the cost of debugging runtime errors eventually outweighs the time spent writing types. But if you’re building a quick proof-of-concept or a small utility, the overhead of TypeScript might just get in your way.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 46.182754402s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"46s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_011",
       "question": "Design a parking lot with object-oriented classes.",
       "actualIntent": "lld",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "To design a parking lot, I’d start by breaking it down into three core entities: the `ParkingLot` itself, the `ParkingSpot`, and the `Vehicle`.\n\nThe `ParkingLot` acts as the orchestrator, managing a collection of `ParkingSpot` objects. Each `ParkingSpot` has a single responsibility: tracking its own availability and the `Vehicle` currently occupying it. The `Vehicle` is a base class or interface, which we can extend for specific types like `Car` or `Motorcycle` to handle size constraints.\n\nHere is how the interfaces would look:\n\n```java\ninterface Vehicle {\n    String getLicensePlate();\n    Size getSize();\n}\n\nclass ParkingSpot {\n    private final String id;\n    private final Size size;\n    private Vehicle parkedVehicle;\n\n    public boolean isAvailable() { return parkedVehicle == null; }\n    public void park(Vehicle v) { this.parkedVehicle = v; }\n    public void removeVehicle() { this.parkedVehicle = null; }\n}\n\nclass ParkingLot {\n    private List<ParkingSpot> spots;\n\n    public Optional<ParkingSpot> findAvailableSpot(Vehicle v) {\n        return spots.stream().filter(s -> s.isAvailable() && s.fits(v)).findFirst();\n    }\n}\n```\n\nIn a primary use case, a `Vehicle` arrives at the `ParkingLot`. The lot queries its `spots` list to find one that is both `isAvailable()` and matches the vehicle's `Size`. Once found, the lot calls `park(vehicle)` on that spot.\n\nFor extension points, I’d use the Strategy pattern for pricing—so you could swap out different billing logic (like hourly vs. daily) without touching the `ParkingLot` class. You could also easily add a `Level` class if you need to manage a multi-story structure, where the `ParkingLot` simply holds a collection of `Level` objects instead of raw spots.\n\nDoes this structure align with the scale you're looking for, or should we dive deeper into how we handle concurrency when two drivers try to claim the same spot?",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 45.802701377s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"45s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_012",
       "question": "How would you optimize a slow database query?",
       "actualIntent": "optimization",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "I’d start by running an `EXPLAIN` plan to see exactly where the execution is stalling—usually, it’s a full table scan where we should be using an index. If the query is currently $O(N)$ because it's scanning every row, the theoretical goal is to get it down to $O(\\log N)$ or $O(1)$ by adding the right index to the filter or join columns.\n\nThe first step is to add a covering index for the columns in your `WHERE`, `JOIN`, and `ORDER BY` clauses to avoid hitting the data pages entirely. If that doesn't bring it down to the required latency, I’d look at the data access pattern: if we're pulling too much data, I'd implement pagination or refine the `SELECT` statement to only return the specific columns needed, which reduces I/O overhead.\n\nIf the query is still slow, I’d check if the table needs partitioning or if we can denormalize to avoid expensive joins, though those add significant maintenance complexity. I’d stop once the query hits the target latency, as over-optimizing beyond the requirement just adds unnecessary technical debt.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 5,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 45.518441777s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"45s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_013",
@@ -240,158 +290,192 @@
       "flags": [],
       "grade": "FAIL",
       "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 45.231369368s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"45s\"}]}}"
+      "judgeExplanation": "Generation error: fetch failed"
     },
     {
       "caseId": "aq_014",
       "question": "Are you comfortable with async/await in JavaScript?",
       "actualIntent": "knowledge_check",
       "actualFollowUpLikelihood": "low",
-      "answer": "",
+      "answer": "I'm definitely comfortable with it. The provided materials don't cover my specific experience with async/await, but I use it to handle asynchronous operations by writing code that looks synchronous, which makes it much easier to read and maintain compared to chaining callbacks or raw promises. For example, I’d use it to fetch data from an API by simply awaiting the response and then parsing the JSON, which keeps the flow clean and avoids \"callback hell.\"",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 4,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 44.940221718s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"44s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "The answer follows the strategy well, though it includes a brief meta-commentary about the provided materials which slightly deviates from the strict technical definition step.",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_016",
       "question": "Your service handles around 5,000 requests per second on a monolithic backend with a single database. Traffic is expected to grow 10x over the next quarter. What would you do?",
       "actualIntent": "scalability",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "At 5,000 requests per second, your primary bottleneck is likely the database connection pool and CPU contention on the monolith. Moving to 50,000 requests per second requires a shift from a single-node architecture to a distributed one, starting with the stateless layer.\n\nFirst, I would decouple the monolith into smaller, stateless services that can be scaled horizontally behind a load balancer. Since the application layer is stateless, this provides immediate headroom by distributing compute across multiple instances.\n\nNext, the database will become the point of failure. I would implement a read-replica strategy to offload read-heavy traffic from the primary instance. If that isn't enough, I’d look into database sharding—partitioning the data by a key like user ID—to distribute the write load across multiple nodes.\n\nFinally, I’d introduce a caching layer like Redis in front of the database to handle hot keys and frequently accessed data. This reduces the pressure on the database significantly, often by an order of magnitude. \n\nTo manage state, I’d move session management out of the application memory and into a distributed store, ensuring that any request can be handled by any service instance. Does one of these areas—the database sharding strategy or the service decomposition—sound like the right place to start digging deeper?",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 44.652893264s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"44s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": false,
+        "unsupported": [
+          "50000"
+        ]
+      }
     },
     {
       "caseId": "aq_018",
       "question": "Tell me about a time you had to convince your team to adopt a different technical approach.",
       "actualIntent": "behavioral",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "At Helix Commerce, I noticed our polling-based inventory sync was struggling, so I proposed moving the Orion order-processing service to Kafka. My teammates were understandably hesitant because we hadn't run Kafka in production before, and the senior engineers were particularly concerned about the potential on-call burden.\n\nTo address their concerns, I spent a week building a proof of concept and drafting a runbook that specifically covered common failure modes to show we could manage the operational side. I then ran a load-test demo that proved we could achieve a 4x reduction in inventory desyncs under peak traffic. Seeing those concrete results and the clear plan for maintenance convinced the team to move forward, and we ended up cutting our desync incidents from three a week to less than one a month. Looking back, I learned that addressing the \"how\" of operations is just as important as the performance gains when you're asking a team to take on a new technology.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 44.260467346s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"44s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_019",
       "question": "Tell me about yourself.",
       "actualIntent": "introduction",
       "actualFollowUpLikelihood": "low",
-      "answer": "",
+      "answer": "I’m currently a Senior Backend Engineer at Helix Commerce, where I’ve spent the last two years focusing on backend infrastructure. My path here started in early-stage startups, where I spent three years building customer-facing APIs and learning the nuances of tuning PostgreSQL under heavy concurrent write loads, which eventually pushed me to specialize in backend systems.\n\nAt Helix, I led the architecture and production rollout of Orion, our order-processing microservice. That project was a major win for us, as it cut our checkout p99 latency from 1.2 seconds down to 340 milliseconds while scaling to handle about 2,000 orders a day. I’m really looking to take that experience with distributed systems into a larger-scale environment now, which is exactly why I’m excited about the work you’re doing here.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 43.980087378s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"43s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "The answer follows the requested strategy steps perfectly, maintains a professional yet natural tone, and provides the appropriate level of detail for a standard-depth introduction.",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_020",
       "question": "Tell me about a challenging production incident you had to resolve.",
       "actualIntent": "experience_question",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "During a Black Friday peak at Helix Commerce, our Orion checkout service started timing out because of a deadlock cycle in the inventory reservation step. I investigated using `pg_stat_activity` and discovered that concurrent transactions were locking the same inventory rows in different orders, causing them to stall.\n\nTo fix it, I updated the reservation logic to enforce a consistent, ascending row-ID lock order across all callers. Within ten minutes of deploying that change, the checkout timeouts dropped from 800 per minute to near zero, and our p99 latency improved from 4.1 seconds to under 400 milliseconds. I also added a proactive alert based on `pg_stat_activity` to catch any similar contention issues before they impact users again.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 43.68710201s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"43s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_021",
       "question": "Walk me through your most recent project and the role you played in it.",
       "actualIntent": "project_context",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "My most recent project was Orion, an order and inventory management microservice I led at Helix Commerce to replace a monolithic checkout module that had become our primary reliability bottleneck. As the tech lead and primary implementer, I designed the architecture, database schema, and API contracts, while also managing the Kafka topic design and production hardening for the service.\n\nWe built Orion using Node.js and TypeScript, using PostgreSQL to manage order state and Redis to handle our inventory read cache. The biggest technical challenge was ensuring data consistency between our synchronous order placement path and the asynchronous inventory reconciliation process running over Kafka. I resolved this by implementing a reservation-then-confirm pattern supported by an outbox table, which allowed us to maintain reliability while processing about 2,000 orders per day at a p99 latency of 340 milliseconds. \n\nIf I were to revisit this, I would look closer at the complexity of the reconciliation logic; while the reservation pattern worked well for consistency, managing the state transitions in the outbox table required careful oversight as we scaled.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 43.302440423s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"43s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_022",
       "question": "How did you handle database reliability in the service you built?",
       "actualIntent": "project_deep_dive",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "For the Orion service, I ensured database reliability through a three-layered strategy designed to prevent data loss during system failures.\n\nFirst, I wrapped order-placement writes in serializable transactions that covered both inventory reservation and order record insertion, which guaranteed we never ended up with partial writes if a crash occurred. For inventory updates coming from Kafka, I implemented optimistic locking using version counters on each row; if a conflict occurred, the system retried up to five times with exponential back-off before reporting a structured error. Finally, I used an outbox table to decouple order confirmation from Kafka publishing, ensuring that even if the broker was unreachable, the order committed atomically and could be replayed later by a background reconciler.\n\nThe most significant challenge was verifying these mechanisms under pressure, which we addressed by running weekly chaos drills where we killed the PostgreSQL primary while it was under active load. This proved effective, as we successfully maintained zero data loss during a four-hour Kafka outage in staging. If I were to revisit this, I would look into further automating the reconciliation process to reduce the manual oversight required when the outbox grows during extended broker downtime.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 43.01248601s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"43s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_023",
       "question": "Why did you choose PostgreSQL over MongoDB for your project?",
       "actualIntent": "technology_decision",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "For the Orion order-processing service, I chose PostgreSQL primarily because we required atomic writes across our orders and inventory reservation tables within a single ACID transaction. At the time, MongoDB’s support for multi-document, cross-collection transactions wasn't mature enough for our production needs.\n\nI also considered MongoDB's flexible schema as an alternative, but it didn't outweigh the necessity of row-level locking, which allowed us to lock specific inventory rows during checkout without blocking the entire collection. The main tradeoff was that PostgreSQL required us to manage coordinated migrations for schema changes, which we wouldn't have faced with MongoDB. However, given our stable domain model and the strict consistency requirements for order placement, PostgreSQL was the more reliable choice for that environment.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 42.745565157s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"42s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "aq_017",
       "question": "Can you elaborate on the memory cost tradeoff?",
       "actualIntent": "follow_up_generic",
       "actualFollowUpLikelihood": "low",
-      "answer": "",
+      "answer": "The memory cost tradeoff really comes down to balancing your hit rate against your hardware budget. Since Redis stores everything in RAM, you’re essentially paying a premium for sub-millisecond latency on your most popular keys.\n\nThe specific implementation detail here is how you handle the \"long tail\" of URLs. If you cache every single request, your memory usage will grow linearly until you hit an OOM error or start evicting data. To manage this, I’d implement an LRU (Least Recently Used) eviction policy. This ensures the memory footprint stays capped at a fixed size while keeping the most frequently accessed URLs in the cache, effectively offloading the \"cold\" data to your primary database without needing to manually manage cache invalidation for every entry.",
       "scores": {
         "voice": null,
         "strategy_adherence": null,
@@ -400,52 +484,69 @@
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 42.444758695s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"42s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "np_01",
       "question": "The service handles 5,000 requests per second. How would you scale it if traffic increased by 10x?",
       "actualIntent": "scalability",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "Scaling from 5,000 to 50,000 requests per second shifts the challenge from simple horizontal scaling to managing resource contention and state.\n\nFirst, I’d look at the stateless application tier. If we’re currently at 5,000 QPS, we likely have a load balancer distributing traffic. Moving to 50,000 means ensuring our auto-scaling groups are configured to spin up instances based on CPU or request latency metrics before the existing nodes hit their saturation point. Since the application tier is stateless, this is the easiest layer to scale horizontally.\n\nThe next bottleneck will almost certainly be the database. At 50,000 QPS, a single primary instance will likely struggle with connection limits and write contention. I’d implement read replicas to offload read-heavy traffic and, if the write volume is high, look into database sharding to partition the data across multiple nodes.\n\nFinally, we’ll hit network and cache limits. I’d introduce or scale up a distributed cache like Redis to sit in front of the database, which drastically reduces the load on the storage layer for frequently accessed data. We’d also need to monitor connection pooling at the application level to ensure we aren't exhausting ports or database connections as we scale the number of application instances. \n\nDoes that sound like the right priority, or would you prefer to dive deeper into the database sharding strategy versus the caching layer?",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 5,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 42.156080375s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"42s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "all pass",
+      "numericProvenance": {
+        "valid": false,
+        "unsupported": [
+          "50000",
+          "50000",
+          "50000"
+        ]
+      }
     },
     {
       "caseId": "np_02",
       "question": "The service has 99.9% availability and p99 latency of 340ms. How would you improve its reliability?",
       "actualIntent": "optimization",
       "actualFollowUpLikelihood": "medium",
-      "answer": "",
+      "answer": "To improve reliability, I’d start by profiling the request path to see if the p99 latency is driven by external dependencies or internal processing, as high latency often masks underlying resource exhaustion or cascading failures. Since we're at 99.9% availability, we're losing about 43 minutes of uptime a month, so the priority is identifying if these failures are due to transient network issues or hard service crashes.\n\nMy first step would be implementing circuit breakers and aggressive timeouts on downstream calls. This prevents a slow dependency from consuming all available threads or connections, which is a common cause of latency spikes. The cost here is increased complexity in handling partial failures, as the UI or calling service now needs to gracefully degrade when a dependency is cut.\n\nIf the latency is internal, I’d look at the concurrency model. If we're hitting a bottleneck, moving to an asynchronous, non-blocking I/O pattern can significantly increase throughput and lower p99s, though it makes the codebase harder to debug and trace. \n\nFinally, I’d verify our current load balancing strategy. If we aren't already, I’d implement request hedging—sending a duplicate request to a second instance if the first doesn't respond within a specific threshold—to shave off those p99 outliers. This increases total traffic volume, so it’s a trade-off between latency and infrastructure cost.",
       "scores": {
-        "voice": null,
-        "strategy_adherence": null,
-        "depth": null,
-        "pacing": null,
+        "voice": 4,
+        "strategy_adherence": 3,
+        "depth": "pass",
+        "pacing": "pass",
         "grounding": null
       },
       "flags": [],
       "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 41.875973622s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"41s\"}]}}"
+      "gradedBy": "deterministic+llm_judge",
+      "judgeExplanation": "The answer identifies the bottleneck and provides optimization steps, but it fails to explicitly state the theoretical lower bound or provide the complexity analysis required by the strategy steps.",
+      "numericProvenance": {
+        "valid": false,
+        "unsupported": [
+          "43"
+        ]
+      }
     },
     {
       "caseId": "np_03",
       "question": "Walk me through how you would set up a Node.js 20 API server with HTTP rate limiting.",
       "actualIntent": "concept_explanation",
       "actualFollowUpLikelihood": "high",
-      "answer": "",
+      "answer": "I’d start by using the native `node:http` module or a lightweight framework like Fastify, then implement rate limiting by integrating the `rate-limiter-flexible` package. The core intuition is to track request counts against a unique identifier—like an IP address or user ID—stored in an in-memory Map or a Redis instance to ensure you aren't hitting your downstream services too hard.\n\nHere is how that looks in practice:\n\n```javascript\nconst { RateLimiterMemory } = require('rate-limiter-flexible');\n\nconst limiter = new RateLimiterMemory({\n  points: 10, // 10 requests\n  duration: 1, // per 1 second\n});\n\n// In your request handler:\nlimiter.consume(req.socket.remoteAddress)\n  .then(() => { /* process request */ })\n  .catch(() => { res.writeHead(429); res.end('Too Many Requests'); });\n```\n\nThe main thing to watch out for is that `RateLimiterMemory` resets if the process restarts, so if you're running in a distributed environment or need persistence across deployments, you’ll want to swap that for `RateLimiterRedis`. Also, keep in mind that if you're behind a proxy like Nginx or AWS ALB, you'll need to look at the `X-Forwarded-For` header instead of `req.socket.remoteAddress` to get the actual client IP.",
       "scores": {
         "voice": null,
         "strategy_adherence": null,
@@ -454,9 +555,12 @@
         "grounding": null
       },
       "flags": [],
-      "grade": "FAIL",
-      "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 41.590326711s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"41s\"}]}}"
+      "grade": "PASS",
+      "gradedBy": "deterministic",
+      "numericProvenance": {
+        "valid": true,
+        "unsupported": []
+      }
     },
     {
       "caseId": "np_04",
@@ -474,7 +578,7 @@
       "flags": [],
       "grade": "FAIL",
       "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 41.201927462s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"41s\"}]}}"
+      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 42.485664773s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"42s\"}]}}"
     },
     {
       "caseId": "np_05",
@@ -492,7 +596,7 @@
       "flags": [],
       "grade": "FAIL",
       "gradedBy": "skipped",
-      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 40.816384949s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"location\":\"global\",\"model\":\"gemini-3.1-flash-lite\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"40s\"}]}}"
+      "judgeExplanation": "Generation error: {\"error\":{\"code\":429,\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 500, model: gemini-3.1-flash-lite\\nPlease retry in 41.816053959s.\",\"status\":\"RESOURCE_EXHAUSTED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Learn more about Gemini API quotas\",\"url\":\"https://ai.google.dev/gemini-api/docs/rate-limits\"}]},{\"@type\":\"type.googleapis.com/google.rpc.QuotaFailure\",\"violations\":[{\"quotaMetric\":\"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\"quotaId\":\"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\"quotaDimensions\":{\"model\":\"gemini-3.1-flash-lite\",\"location\":\"global\"},\"quotaValue\":\"500\"}]},{\"@type\":\"type.googleapis.com/google.rpc.RetryInfo\",\"retryDelay\":\"41s\"}]}}"
     }
   ]
 }

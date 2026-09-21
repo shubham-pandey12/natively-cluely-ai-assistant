@@ -17,7 +17,8 @@ import {
     validateProfileOutput, validateProfileEvidence, buildProfileRepairInstruction, sanitizeCandidateAnswer, CANDIDATE_VOICE_ANSWER_TYPES,
     detectAssistantVoiceMisfire, ASSISTANT_VOICE_ANSWER_TYPES,
     raceStreamWithDeadline, LIVE_INTER_TOKEN_STALL_MS, LIVE_TOTAL_HARD_TIMEOUT_MS,
-    LIVE_LOCAL_FIRST_USEFUL_TIMEOUT_MS, LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS, isLeakedSchemaStub, isLeakedJsonEnvelope, extractAnswerFromJsonEnvelope,
+    LIVE_LOCAL_FIRST_USEFUL_TIMEOUT_MS, LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS, totalHardTimeoutMs,
+    isLeakedSchemaStub, isLeakedJsonEnvelope, extractAnswerFromJsonEnvelope,
     isProviderTransportError, isLeakedInternalTagBlock, isLeakedAnswerArtifact,
     cleanAnswerArtifacts, compressToSpeakable, SCAFFOLD_LABEL_RE, BOLD_PSEUDO_HEADER_RE,
     buildProfileJitPrompt, decideSessionWritePolicy,
@@ -216,9 +217,27 @@ export class IntelligenceEngine extends EventEmitter {
     // epoch ms after which speculativeText is stale; Infinity while stream is still running
     private speculativeTextExpiry: number = Infinity;
     private readonly SPECULATIVE_DEBOUNCE_MS = 350;
-    private readonly SPECULATIVE_MIN_WORDS = 7;
+    private readonly SPECULATIVE_MIN_WORDS = 5;
     private readonly SPECULATIVE_MIN_CONFIDENCE = 0.75;
     private readonly SPECULATIVE_SIMILARITY_THRESHOLD = 0.75;
+
+    // Interviewer turn completion detection — PATH 2 (confirmed trigger).
+    // Aggregates final STT segments and fires handleSuggestionTrigger after
+    // INTERVIEWER_TURN_SILENCE_MS of silence. Distinct from maybeSpeculate()
+    // (PATH 1) which fires speculatively on interim segments.
+    private turnCompletionTimer: ReturnType<typeof setTimeout> | null = null;
+    private interviewerTurnBuffer: string = '';
+    private lastCompletedTurnText: string = '';
+    /** Silence window after the last final STT segment before the turn is
+     *  considered complete. 800 ms matches typical interviewer pause cadence
+     *  without cutting multi-part sentences. */
+    private readonly INTERVIEWER_TURN_SILENCE_MS = 800;
+
+    // Latency instrumentation — per-turn pipeline timestamps (ms epoch).
+    // Reset at the start of each new interviewer speech burst.
+    private interviewerSpeechStartedAt: number = 0;
+    private speculationStartedAt: number = 0;
+    private turnCompletedAt: number = 0;
 
     // Phase 3 dynamic actions — engine state. Created lazily on first
     // setSessionContext call (or per-test injection). Null while engine has no
@@ -488,7 +507,10 @@ export class IntelligenceEngine extends EventEmitter {
 
     private static hasQuestionSignal(text: string): boolean {
         if (text.trimEnd().endsWith('?')) return true;
-        return /\b(what|how|why|where|when|which|who|can you|could you|tell me|explain|describe|walk me through|talk me through)\b/i.test(text);
+        // Speculative path heuristic — used ONLY to gate early speculative
+        // inference (PATH 1). The confirmed trigger (PATH 2) never calls this;
+        // it fires on every completed turn and lets the Planner + LLM decide.
+        return /\b(what|how|why|where|when|which|who|can you|could you|tell me|explain|describe|walk me through|talk me through|give me|show me|implement|write|build|design|how would you|how do you|what would you|why would you)\b/i.test(text);
     }
 
     // Fires speculative LLM inference on a stable high-confidence interviewer partial.
@@ -517,6 +539,7 @@ export class IntelligenceEngine extends EventEmitter {
             // Don't overwrite a speculative stream that is already in flight.
             if (this.speculativeText !== null) return;
             if (Date.now() - this.lastTriggerTime < this.triggerCooldown) return;
+            this.speculationStartedAt = Date.now();
             console.log(`[IntelligenceEngine] Speculative inference fired on interim`, { length: text.length, confidence });
             this.runWhatShouldISay(text, confidence || 0.8, undefined, { speculative: true })
                 .catch(err => console.error('[IntelligenceEngine] Speculative run error:', err));
@@ -532,11 +555,62 @@ export class IntelligenceEngine extends EventEmitter {
 
         if (segment.speaker === 'interviewer') {
             if (!segment.final) {
+                // PATH 1 — Speculative generation on high-confidence partials.
+                // Track speech start for latency instrumentation.
+                if (this.interviewerSpeechStartedAt === 0) {
+                    this.interviewerSpeechStartedAt = Date.now();
+                }
                 this.maybeSpeculate(segment);
-            } else if (this.speculativeTimer !== null) {
-                // Final arrived — cancel debounce; handleSuggestionTrigger will do Jaccard check
-                clearTimeout(this.speculativeTimer);
-                this.speculativeTimer = null;
+                // Any interim speech resets the turn-completion silence timer —
+                // the interviewer is still speaking, do not complete the turn yet.
+                if (this.turnCompletionTimer !== null) {
+                    clearTimeout(this.turnCompletionTimer);
+                    this.turnCompletionTimer = null;
+                }
+            } else {
+                // PATH 2 — Confirmed generation on final segments.
+                // Cancel speculative debounce: the final has arrived.
+                if (this.speculativeTimer !== null) {
+                    clearTimeout(this.speculativeTimer);
+                    this.speculativeTimer = null;
+                }
+                // Accumulate text into the current turn buffer so multi-part
+                // utterances ("How would you … for one million users") are
+                // treated as one turn rather than two separate triggers.
+                const trimmed = segment.text.trim();
+                if (trimmed) {
+                    this.interviewerTurnBuffer = this.interviewerTurnBuffer
+                        ? `${this.interviewerTurnBuffer} ${trimmed}`
+                        : trimmed;
+                }
+                // Rearm the silence timer: fire INTERVIEWER_TURN_COMPLETED only
+                // after INTERVIEWER_TURN_SILENCE_MS of no further speech.
+                if (this.turnCompletionTimer !== null) {
+                    clearTimeout(this.turnCompletionTimer);
+                }
+                const capturedConfidence = segment.confidence ?? 0.8;
+                this.turnCompletionTimer = setTimeout(() => {
+                    this.turnCompletionTimer = null;
+                    const turnText = this.interviewerTurnBuffer.trim();
+                    this.interviewerTurnBuffer = '';
+                    const speechStartedAt = this.interviewerSpeechStartedAt;
+                    this.interviewerSpeechStartedAt = 0;
+                    if (!turnText) return;
+                    // Dedup: same text as the last completed turn (e.g. duplicate
+                    // final from STT provider) must not produce a second answer.
+                    if (turnText === this.lastCompletedTurnText) return;
+                    this.lastCompletedTurnText = turnText;
+                    this.turnCompletedAt = Date.now();
+                    const speculationLeadMs = this.speculationStartedAt > speechStartedAt
+                        ? this.turnCompletedAt - this.speculationStartedAt
+                        : null;
+                    console.log('[IntelligenceEngine] INTERVIEWER_TURN_COMPLETED', {
+                        lengthChars: turnText.length,
+                        turnEndpointLatencyMs: speechStartedAt > 0 ? this.turnCompletedAt - speechStartedAt : null,
+                        speculationLeadMs,
+                    });
+                    this.onInterviewerTurnCompleted(turnText, capturedConfidence);
+                }, this.INTERVIEWER_TURN_SILENCE_MS);
             }
         }
 
@@ -562,6 +636,33 @@ export class IntelligenceEngine extends EventEmitter {
                     .catch(err => console.error('[IntelligenceEngine] Follow-up run error:', err));
             }
         }
+    }
+
+    /**
+     * PATH 2 — Confirmed turn trigger.
+     * Called by the silence debounce in handleTranscript after the interviewer
+     * stops speaking. Fires handleSuggestionTrigger so the full planner pipeline
+     * (classifyIntent → planNextAssistantAction → Interview Intelligence) decides
+     * whether and how to answer. Does NOT gate on hasQuestionSignal — the LLM
+     * determines actionability via the [[NO_ACTION]] sentinel.
+     */
+    private onInterviewerTurnCompleted(turnText: string, confidence: number): void {
+        if (this.activeMode !== 'idle' && this.activeMode !== 'assist') return;
+        // Use SessionTracker's already-stored last interviewer turn as the
+        // canonical question text — it is cleaned and final-only.
+        const lastQuestion = this.session.getLastInterviewerTurn() ?? turnText;
+        void this.handleSuggestionTrigger({
+            context: turnText,
+            lastQuestion,
+            confidence: Math.max(confidence, 0.8),
+            // Skip the time-based cooldown: dedup with any in-flight speculative
+            // stream is handled by the Jaccard similarity gate inside
+            // handleSuggestionTrigger. If speculative already answered this turn
+            // with ≥75% similarity it returns early; otherwise a fresh generation
+            // starts. Without this flag the cooldown would silence confirmed
+            // answers that follow a recent speculative run.
+            skipCooldown: true,
+        }).catch(err => console.error('[IntelligenceEngine] TURN_COMPLETED trigger error:', err));
     }
 
     // Phase 3 dynamic actions — public API ===========================================================
@@ -662,15 +763,20 @@ export class IntelligenceEngine extends EventEmitter {
             const expired = Date.now() > this.speculativeTextExpiry;
             const stale = expired || !trigger.lastQuestion; // empty question — reject conservatively
             if (!stale) {
+                const specWords = this.speculativeText.trim().split(/\s+/).length;
+                const confWords = trigger.lastQuestion.trim().split(/\s+/).length;
+                // Reject if confirmed question is >50% longer than the speculative text:
+                // the interviewer added substantial new intent after speculation started.
+                const wordCountRatioTooLarge = confWords > specWords * 1.5;
                 const similarity = IntelligenceEngine.jaccardSimilarity(this.speculativeText, trigger.lastQuestion);
                 this.speculativeText = null;
                 this.speculativeTextExpiry = Infinity;
-                if (similarity >= this.SPECULATIVE_SIMILARITY_THRESHOLD) {
-                    console.log(`[IntelligenceEngine] Speculative stream accepted (Jaccard=${similarity.toFixed(2)}) — continuing`);
+                if (!wordCountRatioTooLarge && similarity >= this.SPECULATIVE_SIMILARITY_THRESHOLD) {
+                    console.log(`[IntelligenceEngine] Speculative stream accepted (Jaccard=${similarity.toFixed(2)} specW=${specWords} confW=${confWords}) — continuing`);
                     this.lastTriggerTime = Date.now();
                     return;
                 }
-                console.log(`[IntelligenceEngine] Speculative stream rejected (Jaccard=${similarity.toFixed(2)}) — restarting`);
+                console.log(`[IntelligenceEngine] Speculative stream rejected (Jaccard=${similarity.toFixed(2)} specW=${specWords} confW=${confWords} ratioRejected=${wordCountRatioTooLarge}) — restarting`);
             } else {
                 console.log(`[IntelligenceEngine] Speculative result discarded (expired=${expired}, noQuestion=${!trigger.lastQuestion})`);
                 this.speculativeText = null;
@@ -681,7 +787,11 @@ export class IntelligenceEngine extends EventEmitter {
             ++this.currentGenerationId;
         }
 
-        await this.runWhatShouldISay(trigger.lastQuestion, trigger.confidence);
+        await this.runWhatShouldISay(trigger.lastQuestion, trigger.confidence, undefined, {
+            // Thread skipCooldown so shouldThrottleTrigger in runWhatShouldISay
+            // also bypasses the gate for confirmed turn-completion calls.
+            skipCooldown: trigger.skipCooldown,
+        });
     }
 
     private async planSuggestionTrigger(trigger: SuggestionTrigger): Promise<PlannerDecision> {
@@ -709,7 +819,10 @@ export class IntelligenceEngine extends EventEmitter {
             hasDetectedCodingQuestion: Boolean(detectedCodingQuestion.question),
             now: Date.now(),
             lastTriggerTime: this.lastTriggerTime,
-            cooldownMs: this.triggerCooldown,
+            // Confirmed turn-completion triggers bypass the time-based cooldown —
+            // the Jaccard gate in handleSuggestionTrigger handles dedup with any
+            // in-flight speculative stream for the same turn.
+            cooldownMs: trigger.skipCooldown ? 0 : this.triggerCooldown,
         });
     }
 
@@ -2577,10 +2690,18 @@ export class IntelligenceEngine extends EventEmitter {
             const usingLocalLlm = typeof (this.llmHelper as any).isUsingOllama === 'function'
                 ? (this.llmHelper as any).isUsingOllama()
                 : false;
-            const firstUsefulDeadline = usingLocalLlm
-                ? LIVE_LOCAL_TOTAL_HARD_TIMEOUT_MS
-                : LIVE_TOTAL_HARD_TIMEOUT_MS;
+            // Per-type deadline: complex questions (system design, coding) get a longer
+            // ceiling because speculative generation covers most turns, but provider
+            // first-token latency is legitimately higher for dense prompts.
+            const firstUsefulDeadline = totalHardTimeoutMs(answerPlan.answerType, usingLocalLlm);
             let liveDeadlineFired = false;
+            // Latency instrumentation — no prompt content or API keys logged.
+            const requestStartedAt = Date.now();
+            let firstTokenAt = 0;
+            const providerLabel = usingLocalLlm ? 'local'
+                : typeof (this.llmHelper as any).isGroqModel === 'function' && (this.llmHelper as any).isGroqModel?.((this.llmHelper as any).currentModelId ?? '') ? 'groq'
+                : typeof (this.llmHelper as any).isGeminiModel === 'function' && (this.llmHelper as any).isGeminiModel?.((this.llmHelper as any).currentModelId ?? '') ? 'gemini'
+                : 'cloud';
 
             const emitChunk = (chunk: string) => {
                 emittedStreamingToken = true;
@@ -2621,9 +2742,18 @@ export class IntelligenceEngine extends EventEmitter {
                         whatToAnswerCancellationToken.abort(reason);
                     }
                 },
-                onFirstUsefulTimeout: () => { liveDeadlineFired = true; trace.mark('provider_timeout', { budgetMs: firstUsefulDeadline, answerType: answerPlan.answerType }); },
-                onStallTimeout: () => { liveDeadlineFired = true; trace.mark('provider_timeout', { reason: 'inter_token_stall', answerType: answerPlan.answerType }); },
+                onFirstUsefulTimeout: () => {
+                    liveDeadlineFired = true;
+                    trace.mark('provider_timeout', { budgetMs: firstUsefulDeadline, answerType: answerPlan.answerType });
+                    console.log(`[IntelligenceEngine] FIRST_TOKEN_TIMEOUT provider=${providerLabel} answerType=${answerPlan.answerType} deadline=${firstUsefulDeadline}ms elapsed=${Date.now() - requestStartedAt}ms speculative=${isSpeculative}`);
+                },
+                onStallTimeout: () => {
+                    liveDeadlineFired = true;
+                    trace.mark('provider_timeout', { reason: 'inter_token_stall', answerType: answerPlan.answerType });
+                    console.log(`[IntelligenceEngine] STALL_TIMEOUT provider=${providerLabel} answerType=${answerPlan.answerType} firstToken=${firstTokenAt ? firstTokenAt - requestStartedAt : -1}ms elapsed=${Date.now() - requestStartedAt}ms`);
+                },
                 onToken: (token: string) => {
+                    if (!firstTokenAt) firstTokenAt = Date.now();
                     fullAnswer += token;
                     if (isSpeculative) return; // speculative prefetch never streams to UI
                     if (codingGate) {
@@ -2650,6 +2780,10 @@ export class IntelligenceEngine extends EventEmitter {
                     }
                 },
             });
+            // Latency: log completed generation metrics (no prompt content).
+            if (firstTokenAt > 0) {
+                console.log(`[IntelligenceEngine] GENERATION_DONE provider=${providerLabel} answerType=${answerPlan.answerType} ttft=${firstTokenAt - requestStartedAt}ms total=${Date.now() - requestStartedAt}ms speculative=${isSpeculative} outcome=${raceOutcome}`);
+            }
             // Deadline cleanup aborts the provider transport too, but a deadline
             // still needs the established visible fallback below. Keep the owned
             // controller's aborted state out of this decision: cleanup aborts that
@@ -5127,6 +5261,16 @@ export class IntelligenceEngine extends EventEmitter {
         }
         this.speculativeText = null;
         this.speculativeTextExpiry = Infinity;
+        // Turn completion detection cleanup
+        if (this.turnCompletionTimer !== null) {
+            clearTimeout(this.turnCompletionTimer);
+            this.turnCompletionTimer = null;
+        }
+        this.interviewerTurnBuffer = '';
+        this.lastCompletedTurnText = '';
+        this.interviewerSpeechStartedAt = 0;
+        this.speculationStartedAt = 0;
+        this.turnCompletedAt = 0;
     }
 
     /**
